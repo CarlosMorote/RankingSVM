@@ -74,11 +74,26 @@ class RankingDataset:
         # queries estén ya hechas (es lo q se hace en el método self.__encode_data()). Una vez aquí, 
         # hay que transformar query a embedding space (self.embedder.encode) y calcular métricas de 
         # similaridad con respecto de cada elemento en las columnas en self.__CONFIG["text_cols"].
+
+        # IDEAS DE COMO ESTRUCTURAR LOS DATOS.
+        # FICHERO QUERIES.CSV --> columnas: query_id, query
+        # FICHERO RANK_MAPPINGS.CSV (o cualquier otro nombre) --> columnas: query_id, doc_id (el loinc ID), ranking
+        # la idea es q query_id + doc_id actúan de PK.
+        # FICHERO DOCUMENTS.CSV (o cualquier otro nombre)--> el que se utiliza para cargar self.__data 
+        #
+        # IDEAS DE COMO HACER EL MERGE
+        # 1º CROSS PRODUCT ENTRE QUERIES.CSV Y self.__data_enc
+        # 2º INNER JOIN entre el resultado en paso 1º y RANK_MAPPINGS en columnas query_id Y doc_id (loinc ID)
+
+        # Y ESTO SE PUEDE HACER ANTES DEL MERGE YO CREO:
+        # SUSTITUIR VALORES DE  "long_common_name", "component" (QUE SON EMBEDDINGS EN ESTE PUNTO),
+        # POR LA EL VALOR DE SIMILARIDAD ENTRE ESO Y EL ENCODING DE LA QUERY
+
+
+        # PROBLEMAS (si es que se puede gestionar):
         # El problema es ver cómo gestionamos de una manera no súper chapucera el hecho de generar "a la vez", un súper dataframe
         # con tamaño N*q donde N es el tamaño del dataset y q el número de queries, sino generarlo bajo demanda, p.ej., devolver un
         # iterador que te devuelva N datos por cada llamada (las features para UNA query en concreto a cada momento).
         # Aquí es donde también tenemos que gestionar el tema del cruce de datos (el cross product entre query y doc
         # teniendo en cuenta su relación, que viene data por el RANKING manual que se decida)
         # Igualmente, esto lo vemos mañana cuando esté todo el resto si quieres
-
-
