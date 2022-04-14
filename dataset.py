@@ -6,8 +6,6 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from itertools import combinations
 import numpy as np
 
-from SVM import RankSVM
-
 class RankingDataset:
 
     # Per extension load functions
