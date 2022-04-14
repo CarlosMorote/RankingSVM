@@ -25,8 +25,6 @@ class RankSVM(LinearSVC):
     def show_ranking(self, query:str, top=5):
         order = self.rank(query)
 
-        print(order)
-
         df_copy = self.__data.get_data().copy()
 
         df_copy['order'] = pd.Series(order)
