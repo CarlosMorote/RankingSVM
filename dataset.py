@@ -4,6 +4,9 @@ from typing import Union
 from pathlib import Path
 from sentence_transformers import SentenceTransformer, util
 from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.svm import LinearSVC
+from itertools import combinations
+import numpy as np
 
 class RankingDataset:
 
@@ -18,10 +21,20 @@ class RankingDataset:
     )
     
     
-    def __init__(self, datapath:Union[str, Path], separator=";", sentence_transformer='pritamdeka/S-Biomed-Roberta-snli-multinli-stsb'):
+    def __init__(self, 
+            datapath:Union[str, Path], 
+            separator=",", 
+            sentence_transformer='pritamdeka/S-Biomed-Roberta-snli-multinli-stsb',
+            datapath_queries:Union[str,Path] = None,
+            datapath_query_doc:Union[str,Path] = None
+        ):
         self.__data = self.__load_data(Path(datapath), separator)
         self.embedder = sentence_transformer
-        self.__data_enc = self.__encode_data()
+        self.__data_enc = self.__encode_docs()
+        self.__queries = self.__load_data(Path(datapath_queries), separator) if datapath_queries else None
+        self.__queries_enc = self.__encode_queries() if datapath_queries else None
+        self.__query_doc = self.__load_data(Path(datapath_query_doc), separator) if datapath_query_doc else None
+        self.__query_doc_enc = self.__encode_query_doc() if datapath_queries and datapath_query_doc else None
 
 
     @property
@@ -42,7 +55,7 @@ class RankingDataset:
 
         return self.__per_ext_load_func[fext](self.__datapath, sep=separator)
 
-    def __encode_data(self) -> None:
+    def __encode_docs(self) -> pd.DataFrame:
         """One hot encode categorical features and transform into the embedding space textual features."""
 
         data_ohe = self.__data.copy()
@@ -53,7 +66,7 @@ class RankingDataset:
         # Fixed transformations
         
         # discourage
-        data_ohe.discourage = data_ohe.discourage.map({'no':False, 'yes':True})
+        data_ohe.discourage = data_ohe.discourage.map({'no':0, 'yes':1})
 
         # system
         mlb = MultiLabelBinarizer()
@@ -68,21 +81,45 @@ class RankingDataset:
             data_ohe[text_col] = pd.Series([enc for enc in encoded])
         
         return data_ohe
+
+    def __encode_queries(self) -> pd.DataFrame:
+        """Embede the queries"""
+        data_copy = self.__queries.copy()
+
+        encoded = self.embedder.encode(data_copy['query'])
+        data_copy['query'] = pd.Series([enc for enc in encoded])
+
+        return data_copy
+
+    def __encode_query_doc(self) -> pd.DataFrame:
+        """Join the datasets and compute properties"""
+        merge1 = pd.merge(self.__queries_enc,self.__query_doc, on="id_query")
+        df = pd.merge(merge1, self.__data_enc, on="loinc_num")
+
+        df['cos_sim_query_long_common_name'] = df.apply(lambda row: float(util.cos_sim(row['query'],row['long_common_name'])), axis=1)
+        df['cos_sim_query_component'] = df.apply(lambda row: float(util.cos_sim(row['query'],row['component'])), axis=1)
+
+        df = df.drop(columns=['long_common_name', 'component', 'query'])
+
+        return df
     
-    def prepare_training_data(self, queries):
-        #TODO: aquí hay cosas que ver bien cuando tengas terminado toda la parte de preprocesamiento.
-        # La idea es que cuando se llame a esta función, todas las transformaciones INDEPENDIENTES de las
-        # queries estén ya hechas (es lo q se hace en el método self.__encode_data()). Una vez aquí, 
-        # hay que transformar query a embedding space (self.embedder.encode) y calcular métricas de 
-        # similaridad con respecto de cada elemento en las columnas en self.__CONFIG["text_cols"].
-        # El problema es ver cómo gestionamos de una manera no súper chapucera el hecho de generar "a la vez", un súper dataframe
-        # con tamaño N*q donde N es el tamaño del dataset y q el número de queries, sino generarlo bajo demanda, p.ej., devolver un
-        # iterador que te devuelva N datos por cada llamada (las features para UNA query en concreto a cada momento).
-        # Aquí es donde también tenemos que gestionar el tema del cruce de datos (el cross product entre query y doc
-        # teniendo en cuenta su relación, que viene data por el RANKING manual que se decida)
-        # Igualmente, esto lo vemos mañana cuando esté todo el resto si quieres
+    def prepare_training_data_pairwise(self, query = None):
+        # TODO: Si la query no es None que prepare el dataset con esa query (para predict)
+        X, y = [], []
+        df_copy = self.__query_doc_enc.drop(columns=['loinc_num'])
 
-        pass
+        for q in df_copy['id_query'].unique():
+            sub_df = df_copy[df_copy['id_query']==q].drop(columns=['id_query'])
+            for d1, d2 in combinations(range(sub_df.shape[0]), 2):
+                df_diff = sub_df.iloc[d1] - sub_df.iloc[d2]
+                X.append(df_diff.drop(columns=['rank']).to_numpy())
+                y.append(np.sign(df_diff['rank']))
+
+        return np.array(X), np.array(y)
 
 
-aux = RankingDataset('./data/docs.csv')
+data = RankingDataset('./data/docs.csv', datapath_queries='./data/queries.csv', datapath_query_doc='./data/query_doc.csv')
+pairwise_data_X, pairwise_data_y = data.prepare_training_data_pairwise()
+model = LinearSVC(random_state=0, tol=1e-5)
+model.fit(pairwise_data_X, pairwise_data_y)
+print(model.coef_)
