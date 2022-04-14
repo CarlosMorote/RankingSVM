@@ -1,4 +1,4 @@
-# Profile-based-retrieval
+# Pairwise ranking via SVM
 
 ### Lorenzo Alfaro, David
 

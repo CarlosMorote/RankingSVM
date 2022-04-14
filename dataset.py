@@ -24,20 +24,26 @@ class RankingDataset:
     
     
     def __init__(self, 
-            datapath:Union[str, Path], 
+            datapath:Union[str, Path],
+            datapath_queries:Union[str,Path],
+            datapath_query_doc:Union[str,Path],
             separator=",", 
-            sentence_transformer='pritamdeka/S-Biomed-Roberta-snli-multinli-stsb',
-            datapath_queries:Union[str,Path] = None,
-            datapath_query_doc:Union[str,Path] = None
+            sentence_transformer='pritamdeka/S-Biomed-Roberta-snli-multinli-stsb'
         ):
         print('Initializing RankingDataset')
-        self.__data = self.__load_data(Path(datapath), separator)
+        
         self.embedder = sentence_transformer
+
+        self.__data = self.__load_data(Path(datapath), separator)
         self.__data_enc = self.__encode_docs()
-        self.__queries = self.__load_data(Path(datapath_queries), separator) if datapath_queries else None
-        self.__queries_enc = self.__encode_queries() if datapath_queries else None
-        self.__query_doc = self.__load_data(Path(datapath_query_doc), separator) if datapath_query_doc else None
-        self.__query_doc_enc = self.__encode_query_doc() if datapath_queries and datapath_query_doc else None
+
+        self.__queries = self.__load_data(Path(datapath_queries), separator)
+        self.__queries_enc = self.__encode_queries()
+
+        # Prepare training dataset
+        self.__query_doc = self.__load_data(Path(datapath_query_doc), separator)
+        self.__query_doc_enc = self.__encode_query_doc()
+
         print('Ranking Dataset initialized')
 
 
@@ -58,9 +64,7 @@ class RankingDataset:
         if fext not in self.__per_ext_load_func:
             raise ValueError(f'Invalid extension for file "{datapath.name}" ({fext}). Try again with one of {list(self.__per_ext_load_func.keys())}')
         
-        self.__datapath = datapath
-
-        return self.__per_ext_load_func[fext](self.__datapath, sep=separator)
+        return self.__per_ext_load_func[fext](datapath, sep=separator)
 
     def __encode_docs(self) -> pd.DataFrame:
         """One hot encode categorical features and transform into the embedding space textual features."""
@@ -116,6 +120,16 @@ class RankingDataset:
     
     @property
     def train_data(self):
+        if not hasattr(self, '__train_data'):
+            self.train_data = self.__get_train_data()
+        return self.__train_data
+
+    @train_data.setter
+    def train_data(self, data):
+        self.__train_data  = data
+
+
+    def __get_train_data(self):
         X, y = [], []
         # Training
         df_copy = self.__query_doc_enc.drop(columns=self.__config["doc_pk"])
@@ -129,7 +143,6 @@ class RankingDataset:
                 diff = sub_df.iloc[d1] - sub_df.iloc[d2]
                 X.append(diff.drop(labels=['rank']).to_numpy())
                 y.append(np.sign(diff['rank']))
-
         return np.array(X), np.array(y)
 
     def get_test_data(self, query):
@@ -146,15 +159,4 @@ class RankingDataset:
             return df_copy.to_numpy()
 
 
-if __name__=='__main__':
-    data = RankingDataset('./data/docs.csv', datapath_queries='./data/queries.csv', datapath_query_doc='./data/query_doc.csv')
-    rankingModel = RankSVM(data)
-    while (query := input("Query (type q to quit): ").strip().lower()) != 'q':
-        rankingModel.show_ranking(query, top=10)
 
-#pairwise_data_X, pairwise_data_y = data.prepare_training_data_pairwise()
-#model = LinearSVC(random_state=0, tol=1e-5)
-#model.fit(pairwise_data_X, pairwise_data_y)
-#print(model.coef_)
-#test_X, _ = data.prepare_training_data_pairwise("Blood")
-#print(np.argsort(test_X @ model.coef_.ravel()))
