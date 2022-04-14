@@ -103,17 +103,31 @@ class RankingDataset:
 
         return df
     
-    def prepare_training_data_pairwise(self, query = None):
-        # TODO: Si la query no es None que prepare el dataset con esa query (para predict)
+    def prepare_training_data_pairwise(self, query:str = None):
         X, y = [], []
-        df_copy = self.__query_doc_enc.drop(columns=['loinc_num'])
 
-        for q in df_copy['id_query'].unique():
-            sub_df = df_copy[df_copy['id_query']==q].drop(columns=['id_query'])
-            for d1, d2 in combinations(range(sub_df.shape[0]), 2):
-                df_diff = sub_df.iloc[d1] - sub_df.iloc[d2]
-                X.append(df_diff.drop(columns=['rank']).to_numpy())
-                y.append(np.sign(df_diff['rank']))
+        if query:
+            query_embedded = self.embedder.encode(query)
+
+            df_copy = self.__data_enc.copy()
+            df_copy['cos_sim_query_long_common_name'] = df_copy.apply(lambda row: float(util.cos_sim(query_embedded,row['long_common_name'])), axis=1)
+            df_copy['cos_sim_query_component'] = df_copy.apply(lambda row: float(util.cos_sim(query_embedded,row['component'])), axis=1)
+            df_copy = df_copy.drop(columns=['long_common_name', 'component', 'loinc_num'])
+
+            return df_copy.to_numpy(), []
+            for d1, d2 in combinations(range(df_copy.shape[0]), 2):
+                df_diff = df_copy.iloc[d1] - df_copy.iloc[d2]
+                X.append(df_diff.to_numpy())
+
+        else:
+            df_copy = self.__query_doc_enc.drop(columns=['loinc_num'])
+
+            for q in df_copy['id_query'].unique():
+                sub_df = df_copy[df_copy['id_query']==q].drop(columns=['id_query'])
+                for d1, d2 in combinations(range(sub_df.shape[0]), 2):
+                    diff = sub_df.iloc[d1] - sub_df.iloc[d2]
+                    X.append(diff.drop(labels=['rank']).to_numpy())
+                    y.append(np.sign(diff['rank']))
 
         return np.array(X), np.array(y)
 
@@ -123,3 +137,5 @@ pairwise_data_X, pairwise_data_y = data.prepare_training_data_pairwise()
 model = LinearSVC(random_state=0, tol=1e-5)
 model.fit(pairwise_data_X, pairwise_data_y)
 print(model.coef_)
+test_X, _ = data.prepare_training_data_pairwise("Blood")
+print(np.argsort(test_X @ model.coef_.ravel()))
