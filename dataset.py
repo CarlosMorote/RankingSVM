@@ -1,3 +1,4 @@
+from base64 import encode
 import pandas as pd 
 from typing import Union
 from pathlib import Path
@@ -39,7 +40,7 @@ class RankingDataset:
         
         self.__datapath = datapath
 
-        return self.__per_ext_load_func[self.fext](self.__datapath, sep=separator)
+        return self.__per_ext_load_func[fext](self.__datapath, sep=separator)
 
     def __encode_data(self) -> None:
         """One hot encode categorical features and transform into the embedding space textual features."""
@@ -63,8 +64,8 @@ class RankingDataset:
 
 
         for text_col in self.__CONFIG["text_cols"]:
-            # TODO: tengo que comprobar que esto funcione!
-            data_ohe[text_col] = self.embedder.encode(data_ohe.text_col)
+            encoded = self.embedder.encode(data_ohe[text_col])
+            data_ohe[text_col] = pd.Series([enc for enc in encoded])
         
         return data_ohe
     
@@ -81,4 +82,7 @@ class RankingDataset:
         # teniendo en cuenta su relación, que viene data por el RANKING manual que se decida)
         # Igualmente, esto lo vemos mañana cuando esté todo el resto si quieres
 
+        pass
 
+
+aux = RankingDataset('../query1_dataset.csv')
