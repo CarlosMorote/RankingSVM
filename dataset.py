@@ -47,6 +47,9 @@ class RankingDataset:
     def embedder(self, checkpoint_name:str)->None:
         self.__embedder = SentenceTransformer(checkpoint_name)
 
+    def get_data(self):
+        return self.__data
+
 
     def __load_data(self, datapath, separator) -> None:
         fext = datapath.name.split(".")[-1]
@@ -146,10 +149,12 @@ class RankingDataset:
         return np.array(X), np.array(y)
 
 
-data = RankingDataset('./data/docs.csv', datapath_queries='./data/queries.csv', datapath_query_doc='./data/query_doc.csv')
-rankingModel = RankSVM(data)
-while (query := input("Query (type q to quit): ").strip().lower()) != 'q':
-    print(rankingModel.rank(query))
+if __name__=='__main__':
+    data = RankingDataset('./data/docs.csv', datapath_queries='./data/queries.csv', datapath_query_doc='./data/query_doc.csv')
+    rankingModel = RankSVM(data)
+    while (query := input("Query (type q to quit): ").strip().lower()) != 'q':
+        rankingModel.show_ranking(query)
+        
 #pairwise_data_X, pairwise_data_y = data.prepare_training_data_pairwise()
 #model = LinearSVC(random_state=0, tol=1e-5)
 #model.fit(pairwise_data_X, pairwise_data_y)

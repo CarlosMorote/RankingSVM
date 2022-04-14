@@ -1,12 +1,13 @@
 import numpy as np
+import pandas as pd
 from sklearn.svm import LinearSVC
 
 class RankSVM(LinearSVC):
 
-    def __init__(self, data):
+    def __init__(self, data, seed = 0):
         print('Initializing RankSVM')
         self.__data = data
-        super().__init__() 
+        super().__init__(random_state=seed, tol=1e-5) 
         self.fit()
         print('RankSVM initialized')
 
@@ -21,5 +22,16 @@ class RankSVM(LinearSVC):
     def __rank(self, X):
         return np.argsort(X @ self.coef_.ravel())
 
-    def show_ranking(self, order):
-        pass
+    def show_ranking(self, query:str, top=5):
+        order = self.rank(query)
+
+        print(order)
+
+        df_copy = self.__data.get_data().copy()
+
+        df_copy['order'] = pd.Series(order)
+        df_copy = df_copy.sort_values('order',ascending=True).drop(columns=['order'])
+
+        print(df_copy.head(top))
+
+        return df_copy
