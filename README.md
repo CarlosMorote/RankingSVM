@@ -12,6 +12,7 @@
 
 ## Introduction
 
+TODO
 
 ---
 
@@ -19,27 +20,30 @@
 
 ## Run the code
 
+First of all you have to set the information files in the `data` folder. This data will be used to train the model and consists of three files: `docs.csv`, `queries.csv` and `query_doc.csv` (The name does not have to be explicitly this one). 
+
+ - `docs.csv` is the collection of the documents and must have the following characteristics: `loinc_num`, `long_common_name`, `component`, `system`, `property`, `scale`, `class`, `discourage`, `rank_loinc`.
+ - `queries.csv` is the collection of queries by which the model will learn. It consists of `id_query`, `query`.
+ - `query_doc.csv` is the relationship between the documents and the queries. It consists of `id_query`, `loinc_num`, `rank`.
+
+This being the only requirement. To execute the code use the following command.
+
+    python pairwise_ranking_retrieval.py *doc_path* *queries_path* *query_doc_path*
+
+</br>
+
 
 ## Folder sctructure
 
     .
     ├── README.md
-    ├── Serialized --> Folder that contains the serialized objects
-    │   ├── "Topics.json"*
-    │   └── embeddings
-    │       └── "Topic-keyword.pt"*
-    ├── Users.jsonl --> File that describes the users
-    ├── data --> Folder to store the validation data
-    │   └── 20 news group
-    │       └── 20_newsgroup.csv
-    ├── datasets.py
-    ├── profile_based_retrieval.py
-    ├── requirements.txt
-    ├── topics.py
-    ├── topics.txt --> File that lists all the topics
-    ├── users.py
-    ├── utils.py
-    └── validation.py
+    ├── data
+    │   ├── docs.csv
+    │   ├── queries.csv
+    │   └── query_doc.csv
+    ├── dataset.py
+    ├── SVM.py
+    └── pairwise_ranking_retrieval.py
 
 ---
 
@@ -47,3 +51,4 @@
 
 ## Code dependences
 
+TODO
