@@ -67,7 +67,13 @@ class RankingDataset:
         return self.__per_ext_load_func[fext](datapath, sep=separator)
 
     def __encode_docs(self) -> pd.DataFrame:
-        """One hot encode categorical features and transform into the embedding space textual features."""
+        """One hot encode categorical features and transform into the embedding space textual features.
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with long_common_name and component encoded. Also, the rest of the categorical variables are on-hot encoded.
+        """
 
         data_ohe = self.__data.copy()
 
@@ -94,7 +100,13 @@ class RankingDataset:
         return data_ohe
 
     def __encode_queries(self) -> pd.DataFrame:
-        """Encode the queries with the embedding"""
+        """Encode the queries with the embedding
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with the query property encoded
+        """
         data_copy = self.__queries.copy()
 
         encoded = self.embedder.encode(data_copy['query'])
@@ -103,7 +115,15 @@ class RankingDataset:
         return data_copy
 
     def __encode_query_doc(self) -> pd.DataFrame:
-        """Join the datasets and compute properties"""
+        """Join the datasets and compute properties such as the cos similarity between
+        long_common_name and query; component and query too.
+
+        Returns
+        -------
+        pd.DataFrame
+            Dataframe with all the information of queries and its related document.
+            The cos similarity its also added
+        """
 
         # Performs join between the data
         merge = pd.merge(self.__queries_enc,self.__query_doc, on=self.__config["query_pk"])
