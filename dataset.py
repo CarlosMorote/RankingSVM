@@ -1,12 +1,12 @@
-from base64 import encode
 import pandas as pd 
 from typing import Union
 from pathlib import Path
 from sentence_transformers import SentenceTransformer, util
 from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.svm import LinearSVC
 from itertools import combinations
 import numpy as np
+
+from SVM import RankSVM
 
 class RankingDataset:
 
@@ -28,6 +28,7 @@ class RankingDataset:
             datapath_queries:Union[str,Path] = None,
             datapath_query_doc:Union[str,Path] = None
         ):
+        print('Initializing RankingDataset')
         self.__data = self.__load_data(Path(datapath), separator)
         self.embedder = sentence_transformer
         self.__data_enc = self.__encode_docs()
@@ -35,6 +36,7 @@ class RankingDataset:
         self.__queries_enc = self.__encode_queries() if datapath_queries else None
         self.__query_doc = self.__load_data(Path(datapath_query_doc), separator) if datapath_query_doc else None
         self.__query_doc_enc = self.__encode_query_doc() if datapath_queries and datapath_query_doc else None
+        print('Ranking Dataset initialized')
 
 
     @property
@@ -145,9 +147,12 @@ class RankingDataset:
 
 
 data = RankingDataset('./data/docs.csv', datapath_queries='./data/queries.csv', datapath_query_doc='./data/query_doc.csv')
-pairwise_data_X, pairwise_data_y = data.prepare_training_data_pairwise()
-model = LinearSVC(random_state=0, tol=1e-5)
-model.fit(pairwise_data_X, pairwise_data_y)
-print(model.coef_)
-test_X, _ = data.prepare_training_data_pairwise("Blood")
-print(np.argsort(test_X @ model.coef_.ravel()))
+rankingModel = RankSVM(data)
+while (query := input("Query (type q to quit): ").strip().lower()) != 'q':
+    print(rankingModel.rank(query))
+#pairwise_data_X, pairwise_data_y = data.prepare_training_data_pairwise()
+#model = LinearSVC(random_state=0, tol=1e-5)
+#model.fit(pairwise_data_X, pairwise_data_y)
+#print(model.coef_)
+#test_X, _ = data.prepare_training_data_pairwise("Blood")
+#print(np.argsort(test_X @ model.coef_.ravel()))
