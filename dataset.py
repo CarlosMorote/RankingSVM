@@ -18,7 +18,7 @@ class RankingDataset:
     )
     
     
-    def __init__(self, datapath:Union[str, Path], separator=",", sentence_transformer='pritamdeka/S-Biomed-Roberta-snli-multinli-stsb'):
+    def __init__(self, datapath:Union[str, Path], separator=";", sentence_transformer='pritamdeka/S-Biomed-Roberta-snli-multinli-stsb'):
         self.__data = self.__load_data(Path(datapath), separator)
         self.embedder = sentence_transformer
         self.__data_enc = self.__encode_data()

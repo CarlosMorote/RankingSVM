@@ -1,30 +1,14 @@
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 
-file_path = './query1_dataset.csv'
+file_path = './data/'
 
-df = pd.read_csv(file_path, sep=';')
+df_queries = pd.read_csv(f"{file_path}queries.csv")
+df_docs = pd.read_csv(f"{file_path}docs.csv")
+df_query_doc = pd.read_csv(f"{file_path}query_doc.csv")
 
-# discourage
-df.discourage = df.discourage.map({'no':False, 'yes':True})
+merge1 = pd.merge(df_queries,df_query_doc, on="id_query")
+df = pd.merge(merge1, df_docs, on="loinc_num")
 
-# system
-mlb = MultiLabelBinarizer()
-df.system = df.system.str.split('/')
-df = df.join(pd.DataFrame(mlb.fit_transform(df.pop('system')),
-                columns=[f"system_{i}" for i in mlb.classes_],
-                index=df.index))
-
-# property
-df = df.join(pd.get_dummies(df.pop('property'), prefix="property"))
-
-# scale
-df = df.join(pd.get_dummies(df.pop('scale'), prefix="scale"))
-
-# class
-df = df.join(pd.get_dummies(df.pop('class'), prefix="class"))
-
-print(df.head(5))
-
-# pairwise transformation
+print(df.head(1))
 
