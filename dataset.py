@@ -153,8 +153,8 @@ if __name__=='__main__':
     data = RankingDataset('./data/docs.csv', datapath_queries='./data/queries.csv', datapath_query_doc='./data/query_doc.csv')
     rankingModel = RankSVM(data)
     while (query := input("Query (type q to quit): ").strip().lower()) != 'q':
-        rankingModel.show_ranking(query)
-        
+        rankingModel.show_ranking(query, top=10)
+
 #pairwise_data_X, pairwise_data_y = data.prepare_training_data_pairwise()
 #model = LinearSVC(random_state=0, tol=1e-5)
 #model.fit(pairwise_data_X, pairwise_data_y)
