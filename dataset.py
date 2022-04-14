@@ -83,7 +83,7 @@ class RankingDataset:
         return data_ohe
 
     def __encode_queries(self) -> pd.DataFrame:
-        """Embede the queries"""
+        """Encode the queries with the embedding"""
         data_copy = self.__queries.copy()
 
         encoded = self.embedder.encode(data_copy['query'])
@@ -93,37 +93,49 @@ class RankingDataset:
 
     def __encode_query_doc(self) -> pd.DataFrame:
         """Join the datasets and compute properties"""
-        merge1 = pd.merge(self.__queries_enc,self.__query_doc, on="id_query")
-        df = pd.merge(merge1, self.__data_enc, on="loinc_num")
 
+        # Performs join between the data
+        merge = pd.merge(self.__queries_enc,self.__query_doc, on="id_query")
+        df = pd.merge(merge, self.__data_enc, on="loinc_num")
+
+        # Compute the cos similarity against the query vs long_common_name and component
         df['cos_sim_query_long_common_name'] = df.apply(lambda row: float(util.cos_sim(row['query'],row['long_common_name'])), axis=1)
         df['cos_sim_query_component'] = df.apply(lambda row: float(util.cos_sim(row['query'],row['component'])), axis=1)
 
+        # Drop those columns that the model cannot process
         df = df.drop(columns=['long_common_name', 'component', 'query'])
 
         return df
     
     def prepare_training_data_pairwise(self, query:str = None):
+        """
+        Transform the data to a training or prediction purpose.
+        If a query is set as a parameter the transformation performed
+        it is with predictin purposes. Otherwise to train the model.
+        """
         X, y = [], []
 
         if query:
+            # Prediction
             query_embedded = self.embedder.encode(query)
 
+            # Compute the cos similiarities and drop columns
             df_copy = self.__data_enc.copy()
             df_copy['cos_sim_query_long_common_name'] = df_copy.apply(lambda row: float(util.cos_sim(query_embedded,row['long_common_name'])), axis=1)
             df_copy['cos_sim_query_component'] = df_copy.apply(lambda row: float(util.cos_sim(query_embedded,row['component'])), axis=1)
             df_copy = df_copy.drop(columns=['long_common_name', 'component', 'loinc_num'])
 
-            return df_copy.to_numpy(), []
-            for d1, d2 in combinations(range(df_copy.shape[0]), 2):
-                df_diff = df_copy.iloc[d1] - df_copy.iloc[d2]
-                X.append(df_diff.to_numpy())
+            # y is empty because we want to learn the ranking
+            return df_copy.to_numpy(), y
 
         else:
+            # Training
             df_copy = self.__query_doc_enc.drop(columns=['loinc_num'])
 
+            # Compute per each different query
             for q in df_copy['id_query'].unique():
                 sub_df = df_copy[df_copy['id_query']==q].drop(columns=['id_query'])
+                # Compute all the pairwise instances (combinations)
                 for d1, d2 in combinations(range(sub_df.shape[0]), 2):
                     diff = sub_df.iloc[d1] - sub_df.iloc[d2]
                     X.append(diff.drop(labels=['rank']).to_numpy())
