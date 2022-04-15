@@ -5,7 +5,8 @@ from dataset import RankingDataset
 
 class RankSVM(LinearSVC):
     """
-    RankSVM merge a Linear SVC with ranking.
+    RankSVM combines Linear SVC with information retrieval to rank a set of documents according
+    to the relevance with respect to a query.
     A model it is fit but the prediction model its override to generate a rank but prediction.
     """
 
