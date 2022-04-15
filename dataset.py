@@ -17,7 +17,7 @@ class RankingDataset:
     __SCORE_FUNC_MAP = dict(
         dot = util.dot_score,
         cos = util.cos_sim,
-        euclidean = lambda x, y: torch.tensor([1/(1+torch.nn.functional.pairwise_distance(x, k)) for k in y])
+        euclidean = lambda x, y: 1/(1+torch.nn.functional.pairwise_distance(torch.tensor(x), torch.tensor(y)))
     )
 
     __similarity_measure = None
@@ -177,7 +177,15 @@ class RankingDataset:
         return df
 
 
-    def __get_train_data(self):
+    def __get_train_data(self) -> tuple(np.ndarray, np.ndarray):
+        """Get training data from the per-query-per-document encoded data following the sci-kit learn nomenclature,
+        i.e., X for feature space and y for label space.
+
+        Returns
+        -------
+        tuple(np.ndarray, np.ndarray)
+            Array of features (X) and array of labels (y)
+        """
         X, y = [], []
         # Training
         df_copy = self.__query_doc_enc.drop(columns=self.__config["doc_pk"])

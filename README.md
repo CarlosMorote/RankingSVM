@@ -34,9 +34,19 @@ First of all you have to set the information files in the `data` folder. This da
  - `queries.csv` is the collection of queries by which the model will learn. It consists of `id_query`, `query`.
  - `query_doc.csv` is the relationship between the documents and the queries. It consists of `id_query`, `loinc_num`, `rank`.
 
-This being the only requirement. To execute the code use the following command.
+The main script corresponds to `profile_based_retrieval.py`. This script initializes the engine with the provided parameters and waits to a user's query in order to compute a proper ordering for that query. The script takes as parameters:
+ - **datapath_documents**: Filepath to the file containing the collection of documents.
+ - **datapath_queries**: Filepath to the file containing the collection of queries.
+ - **datapath_query_doc**: Filepath to the file containing the per-query-per-document ranks.
+ - **--sentence_transformer**: Name of a custom sentence transformer checkpoint. _Default_: "pritamdeka/S-Biomed-Roberta-snli-multinli-stsb"
+  - **--seed**:Seed to use to grant reproducibility of the training process of the SVM model._Type_: int.  _Default_: 0
+  - **--separator**: Data field separator, e.g., ',' in csv files. _Default_: ","
+ - **-s --similarity_measure**: Default similarity score function. _Values_: "dot", "cos", "euclidean". _Default_: "cos"
+ - **-t --topk**: Top k documents of the rank to show in CLI. _Type_:int . _Default_: 10
 
-    python pairwise_ranking_retrieval.py *doc_path* *queries_path* *query_doc_path*
+To execute the code you can use the following command.
+
+    python pairwise_ranking_retrieval.py *doc_path* *queries_path* *query_doc_path* [optional params]*
 
 </br>
 

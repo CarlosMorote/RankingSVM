@@ -19,8 +19,13 @@ if __name__=='__main__':
                 help="Name of a custom sentence transformer checkpoint.")
     parser.add_argument("--separator", default=",",
                 help="Data field separator, e.g., ',' in csv files.")
+    parser.add_argument("--seed", type=int, default=0,
+                help='Seed to use to grant reproducibility of the training process of the SVM model.')
     parser.add_argument("-s", "--similarity_measure", default="cos", choices=["dot", "cos", "euclidean"],
                 help="Default similarity score function")
+    parser.add_argument("-t", "--topk", type=int, default=10,
+                help="Top k documents of the rank to show in CLI")
+
 
     # Parse arguments.
     args = parser.parse_args()
@@ -33,7 +38,7 @@ if __name__=='__main__':
                           similarity_measure=args.similarity_measure
                           )
                           
-    rankingModel = RankSVM(data)
+    rankingModel = RankSVM(data, seed=args.seed)
 
     while (query := input("Query (type q to quit): ").strip().lower()) != 'q':
-        rankingModel.show_ranking(query, top=10)
+        rankingModel.show_ranking(query, top=args.t)
