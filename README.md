@@ -12,7 +12,15 @@
 
 ## Introduction
 
-TODO
+In this work we describe a basic implementation of a retrieval function via linear support-
+vector machines, following the framework proposed in (Joachims, 2002), which lies within the
+pairwise ranking paradigm. To that end, we utilize a small sample of data from the LOINC
+database to extract a meaningful set of document descriptors both at training and inference
+time.
+
+<sub>Joachims, T. (2002). Optimizing search engines using clickthrough data. In Proceedings of
+the eighth acm sigkdd international conference on knowledge discovery and data mining
+(pp. 133–142).</sub>
 
 ---
 
