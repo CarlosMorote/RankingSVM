@@ -34,7 +34,7 @@ First of all you have to set the information files in the `data` folder. This da
  - `queries.csv` is the collection of queries by which the model will learn. It consists of `id_query`, `query`.
  - `query_doc.csv` is the relationship between the documents and the queries. It consists of `id_query`, `loinc_num`, `rank`.
 
-The main script corresponds to `profile_based_retrieval.py`. This script initializes the engine with the provided parameters and waits to a user's query in order to compute a proper ordering for that query. The script takes as parameters:
+The main script corresponds to `pairwise_ranking_retrieval.py`. This script initializes the engine with the provided parameters and waits to a user's query in order to compute a proper ordering for that query. The script takes as parameters:
  - **datapath_documents**: Filepath to the file containing the collection of documents.
  - **datapath_queries**: Filepath to the file containing the collection of queries.
  - **datapath_query_doc**: Filepath to the file containing the per-query-per-document ranks.
