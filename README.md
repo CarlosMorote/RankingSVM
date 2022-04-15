@@ -55,6 +55,7 @@ To execute the code you can use the following command.
 
     .
     ├── README.md
+    ├── requirements.txt
     ├── data
     │   ├── docs.csv
     │   ├── queries.csv
@@ -69,4 +70,9 @@ To execute the code you can use the following command.
 
 ## Code dependences
 
-TODO
+- `numpy` (1.20.3)
+- `packaging` (21.0)
+- `pandas` (1.3.4)
+- `scikit_learn` (1.0.2)
+- `sentence_transformers` (2.2.0)
+- `torch` (1.11.0)
